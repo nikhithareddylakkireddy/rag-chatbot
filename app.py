@@ -14,7 +14,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # Page Config
 st.set_page_config(page_title="RAG AI Chatbot", page_icon="📘", layout="centered")
 
-st.title("📘 Build Your Own AI Chatbot (RAG + OpenRouter)")
+st.title("📘 RAG Chatbot (OpenRouter Free Version)")
 st.markdown("Upload a PDF and ask questions. The chatbot answers **only from the document content**.")
 
 # Clear Button
