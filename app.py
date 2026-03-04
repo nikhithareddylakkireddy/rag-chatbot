@@ -14,11 +14,11 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 st.set_page_config(page_title="RAG Chatbot", page_icon="📘", layout="wide")
 
 st.title("📘 RAG Chatbot (OpenRouter Free Version)")
-st.markdown("Upload a PDF and ask questions.")
+st.markdown("Upload a PDF and ask multiple questions.")
 
 HISTORY_FILE = "chat_history.json"
 
-# Load chat history
+# Load history
 if os.path.exists(HISTORY_FILE):
     with open(HISTORY_FILE, "r") as file:
         chat_history = json.load(file)
@@ -26,7 +26,7 @@ else:
     chat_history = []
 
 # ---------------------------
-# LEFT SIDEBAR (Conversations)
+# SIDEBAR (Previous Chats)
 # ---------------------------
 
 with st.sidebar:
@@ -41,14 +41,21 @@ with st.sidebar:
         st.markdown("---")
 
 # ---------------------------
-# MAIN CHAT AREA
+# SESSION STORAGE
+# ---------------------------
+
+if "pdf_context" not in st.session_state:
+    st.session_state.pdf_context = None
+
+# ---------------------------
+# PDF Upload
 # ---------------------------
 
 uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
 
-if uploaded_file:
+if uploaded_file and st.session_state.pdf_context is None:
 
-    st.success("✅ PDF Uploaded Successfully!")
+    st.success("PDF Uploaded Successfully!")
 
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(uploaded_file.read())
@@ -66,7 +73,15 @@ if uploaded_file:
 
     full_context = "\n\n".join([doc.page_content for doc in docs])
 
-    st.info(f"📄 Document processed into {len(docs)} chunks.")
+    st.session_state.pdf_context = full_context
+
+    st.info(f"Document processed into {len(docs)} chunks.")
+
+# ---------------------------
+# QUESTION INPUT
+# ---------------------------
+
+if st.session_state.pdf_context:
 
     query = st.text_input("Ask a question about the PDF")
 
@@ -86,7 +101,7 @@ if uploaded_file:
                 },
                 {
                     "role": "user",
-                    "content": f"Context:\n{full_context[:8000]}\n\nQuestion:{query}"
+                    "content": f"Context:\n{st.session_state.pdf_context[:8000]}\n\nQuestion:{query}"
                 }
             ],
             "temperature": 0.3,
@@ -103,12 +118,13 @@ if uploaded_file:
             result = response.json()
 
             if "choices" in result:
+
                 answer = result["choices"][0]["message"]["content"]
 
                 st.subheader("💡 Answer:")
                 st.write(answer)
 
-                # Save conversation
+                # Save chat
                 chat_history.append({
                     "question": query,
                     "answer": answer
