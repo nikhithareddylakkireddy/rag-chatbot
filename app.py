@@ -11,32 +11,44 @@ load_dotenv()
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-st.set_page_config(page_title="RAG Chatbot", page_icon="📘")
+st.set_page_config(page_title="RAG Chatbot", page_icon="📘", layout="wide")
 
 st.title("📘 RAG Chatbot (OpenRouter Free Version)")
 st.markdown("Upload a PDF and ask questions.")
 
 HISTORY_FILE = "chat_history.json"
 
-# Load existing chat history
+# Load chat history
 if os.path.exists(HISTORY_FILE):
     with open(HISTORY_FILE, "r") as file:
         chat_history = json.load(file)
 else:
     chat_history = []
 
-st.subheader("💬 Previous Conversations")
+# ---------------------------
+# LEFT SIDEBAR (Conversations)
+# ---------------------------
 
-for chat in chat_history:
-    st.write("**User:**", chat["question"])
-    st.write("**Bot:**", chat["answer"])
-    st.write("---")
+with st.sidebar:
+    st.header("💬 Previous Conversations")
+
+    if len(chat_history) == 0:
+        st.write("No previous conversations yet.")
+
+    for chat in reversed(chat_history):
+        st.markdown("**User:** " + chat["question"])
+        st.markdown("**Bot:** " + chat["answer"][:120] + "...")
+        st.markdown("---")
+
+# ---------------------------
+# MAIN CHAT AREA
+# ---------------------------
 
 uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
 
 if uploaded_file:
 
-    st.success("PDF Uploaded Successfully!")
+    st.success("✅ PDF Uploaded Successfully!")
 
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(uploaded_file.read())
@@ -54,7 +66,7 @@ if uploaded_file:
 
     full_context = "\n\n".join([doc.page_content for doc in docs])
 
-    st.info(f"Document processed into {len(docs)} chunks.")
+    st.info(f"📄 Document processed into {len(docs)} chunks.")
 
     query = st.text_input("Ask a question about the PDF")
 
@@ -80,7 +92,7 @@ if uploaded_file:
             "temperature": 0.3,
         }
 
-        with st.spinner("Thinking..."):
+        with st.spinner("🤖 Thinking..."):
 
             response = requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
